@@ -46,6 +46,14 @@ namespace message
     };
 }
 
+namespace net_type
+{
+    using message_t = int32_t;
+    using player_t = int16_t;
+    using component_t = int16_t;
+    using len_t = int8_t;
+}
+
 ///canary_start
 ///message::REPORT
 ///TYPE
@@ -53,7 +61,6 @@ namespace message
 ///LEN
 ///DATA
 ///canary_end
-
 namespace report
 {
     enum report : int32_t
