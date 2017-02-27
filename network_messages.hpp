@@ -2,7 +2,8 @@
 #define NETWORK_MESSAGES_HPP_INCLUDED
 
 #define GAMESERVER_PORT "6950"
-#define MASTER_PORT     "6850"
+#define MASTER_PORT     "6850" ///for server functions
+#define MASTER_CLIENT_PORT "6851" ///for client functions
 
 //#define MASTER_IP "127.0.0.1"
 

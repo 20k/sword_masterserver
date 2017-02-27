@@ -12,7 +12,7 @@
 
 using namespace std;
 
-std::vector<tcp_sock> sockets;
+std::vector<udp_sock> sockets;
 
 void cleanup()
 {
@@ -63,6 +63,7 @@ udp_serv_info process_ping(byte_fetch& fetch)
     return info;
 }
 
+///wouldn't this be great... as some kind of OBJECT PERHAPS?????!!!?!?
 void receive_pings(std::vector<udp_game_server>& servers)
 {
     static udp_sock host;
@@ -119,6 +120,7 @@ void process_timeouts(std::vector<udp_game_server>& servers)
 
         if(serv.timeout_time.getElapsedTime().asSeconds() > serv.timeout_s)
         {
+            ///use more debug info here
             printf("timeout gameserver\n");
 
             servers.erase(servers.begin() + i);
@@ -161,10 +163,12 @@ std::vector<char> get_udp_client_response(std::vector<udp_game_server>& servers)
 
 int main()
 {
-    tcp_sock sockfd = tcp_host(MASTER_PORT);
+    //tcp_sock sockfd = tcp_host(MASTER_PORT);
 
     ///incase of an unclean exit.
     atexit(cleanup);
+
+    udp_sock client_host_sock = udp_host(MASTER_CLIENT_PORT);
 
     //master_server master;
 
@@ -176,107 +180,81 @@ int main()
         receive_pings(udp_serverlist);
         process_timeouts(udp_serverlist);
 
-        tcp_sock new_fd = conditional_accept(sockfd);
+        bool any_read = true;
 
-        ///really... we want to wait for something
-        ///to identify as a server, or client
-        if(new_fd.valid())
+        while(any_read && sock_readable(client_host_sock))
         {
-            sockets.push_back(new_fd);
-        }
+            sockaddr_storage to_client;
 
-        //master.cull_dead();
+            auto data = udp_receive_from(client_host_sock, &to_client);
 
-        //master.tick_all();
+            any_read = data.size() > 0;
 
-        for(int i=0; i<sockets.size(); i++)
-        {
-            tcp_sock fd = sockets[i];
+            byte_fetch fetch;
+            fetch.ptr.swap(data);
 
-            if(sock_readable(fd))
+            while(!fetch.finished())
             {
-                auto data = tcp_recv(fd);
+                int32_t found_canary = fetch.get<int32_t>();
 
-                //if(data.size() == 0 || fd.invalid())
-                if(fd.invalid())
+                while(found_canary != canary_start && !fetch.finished())
                 {
-                    printf("boo, a client disconnected!\n");
+                    found_canary = fetch.get<int32_t>();
+                }
 
-                    fd.close();
+                int32_t type = fetch.get<int32_t>();
+
+                /*if(type == message::GAMESERVER)
+                {
+                    ///the port the server is hosting on, NOT COMMUNICATING WITH ME
+                    uint32_t server_port = fetch.get<uint32_t>();
+
+                    int32_t found_end = fetch.get<int32_t>();
+
+                    if(found_end != canary_end)
+                        continue;
+
+                    game_server serv = master.server_from_sock(fd, server_port);
+                    master.add_server(serv);
+
+                    printf("adding new gameserver\n");
 
                     sockets.erase(sockets.begin() + i);
                     i--;
                     continue;
-                }
+                }*/
 
-                byte_fetch fetch;
-                fetch.ptr.swap(data);
-
-                while(!fetch.finished())
+                if(type == message::CLIENT)
                 {
-                    int32_t found_canary = fetch.get<int32_t>();
+                    auto t = std::time(nullptr);
+                    auto tm = *std::localtime(&t);
 
-                    while(found_canary != canary_start && !fetch.finished())
-                    {
-                        found_canary = fetch.get<int32_t>();
-                    }
+                    printf("client ping\n");
+                    std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << std::endl;
 
-                    int32_t type = fetch.get<int32_t>();
+                    int32_t found_end = fetch.get<int32_t>();
 
-                    /*if(type == message::GAMESERVER)
-                    {
-                        ///the port the server is hosting on, NOT COMMUNICATING WITH ME
-                        uint32_t server_port = fetch.get<uint32_t>();
-
-                        int32_t found_end = fetch.get<int32_t>();
-
-                        if(found_end != canary_end)
-                            continue;
-
-                        game_server serv = master.server_from_sock(fd, server_port);
-                        master.add_server(serv);
-
-                        printf("adding new gameserver\n");
-
-                        sockets.erase(sockets.begin() + i);
-                        i--;
+                    if(found_end != canary_end)
                         continue;
-                    }*/
 
-                    if(type == message::CLIENT)
-                    {
-                        auto t = std::time(nullptr);
-                        auto tm = *std::localtime(&t);
+                    //tcp_send(fd, master.get_client_response());
 
-                        printf("client ping\n");
-                        std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << std::endl;
+                    //tcp_send(fd, get_udp_client_response(udp_serverlist));
 
-                        int32_t found_end = fetch.get<int32_t>();
-
-                        if(found_end != canary_end)
-                            continue;
-
-                        //tcp_send(fd, master.get_client_response());
-
-                        tcp_send(fd, get_udp_client_response(udp_serverlist));
-
-                        fd.close();
-
-                        sockets.erase(sockets.begin() + i);
-                        i--;
-                        continue;
-                    }
+                    udp_send_to(client_host_sock, get_udp_client_response(udp_serverlist), (sockaddr*)&to_client);
                 }
             }
         }
 
+
         sf::sleep(sf::milliseconds(1));
     }
 
-    closesocket(sockfd.get());
+    closesocket(client_host_sock.get());
 
-    for(auto& i : sockets)
-        closesocket(i.get());
+    ///don't double free!
+    //for(auto& i : sockets)
+    //    closesocket(i.get());
 
     return 0;
 }
