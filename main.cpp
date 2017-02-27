@@ -128,7 +128,7 @@ void process_timeouts(std::vector<udp_game_server>& servers)
     }
 }
 
-std::vector<char> get_udp_client_respose(std::vector<udp_game_server>& servers)
+std::vector<char> get_udp_client_response(std::vector<udp_game_server>& servers)
 {
     byte_vector vec;
 
@@ -258,7 +258,7 @@ int main()
 
                         //tcp_send(fd, master.get_client_response());
 
-                        tcp_send(fd, get_udp_client_respose(udp_serverlist));
+                        tcp_send(fd, get_udp_client_response(udp_serverlist));
 
                         fd.close();
 
