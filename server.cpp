@@ -1,7 +1,7 @@
 #include "server.hpp"
 #include "network_messages.hpp"
 
-void master_server::cull_dead()
+/*void master_server::cull_dead()
 {
     for(int i=0; i<servers.size(); i++)
     {
@@ -27,17 +27,17 @@ void master_server::cull_dead()
             i--;
         }
     }
-}
+}*/
 
-void master_server::tick_all()
+/*void master_server::tick_all()
 {
     for(int i=0; i<servers.size(); i++)
     {
         printf("test tick %i\n", i);
     }
-}
+}*/
 
-game_server master_server::server_from_sock(tcp_sock& sock, uint32_t port)
+/*game_server master_server::server_from_sock(tcp_sock& sock, uint32_t port)
 {
     std::string ip = sock.get_peer_ip();
     std::string my_port_to_them = sock.get_peer_port();
@@ -54,9 +54,9 @@ game_server master_server::server_from_sock(tcp_sock& sock, uint32_t port)
     serv.their_host_port = their_host_port;
 
     return serv;
-}
+}*/
 
-void master_server::add_server(const game_server& serv)
+/*void master_server::add_server(const game_server& serv)
 {
     for(auto& i : servers)
     {
@@ -100,4 +100,4 @@ std::vector<char> master_server::get_client_response()
     vec.push_back(canary_end);
 
     return vec.ptr;
-}
+}*/

@@ -84,11 +84,15 @@ void receive_pings(std::vector<udp_game_server>& servers)
 
     auto data = udp_receive_from(host, &store);
 
+    bool new_server = false;
+
     if(!contains(servers, store))
     {
         printf("New server: IP %s Port %s\n", get_addr_ip(store).c_str(), get_addr_port(store).c_str());
 
         servers.push_back({store, sf::Clock()});
+
+        new_server = true;
     }
 
     if(data.size() <= 0)
@@ -98,6 +102,11 @@ void receive_pings(std::vector<udp_game_server>& servers)
     fetch.ptr.swap(data);
 
     udp_serv_info info = process_ping(fetch);
+
+    if(new_server)
+    {
+        printf("Hosting on port %s\n", std::to_string(info.port_num).c_str());
+    }
 
     //printf("%i %i\n", info.player_count, info.port_num);
 
