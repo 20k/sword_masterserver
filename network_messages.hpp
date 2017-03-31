@@ -46,6 +46,7 @@ namespace message
         PING_DATA,
         PING_GAMESERVER,
         PING_GAMESERVER_RESPONSE,
+        PLAYER_STATS_UPDATE_INDIVIDUAL, ///kills, deaths for a player
     };
 }
 
